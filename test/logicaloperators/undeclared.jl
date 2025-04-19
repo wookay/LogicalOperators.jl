@@ -3,7 +3,7 @@ module test_logicaloperators_undeclared
 using Test
 
 if VERSION > v"1.11"
-    warn_msg = if VERSION >= v"1.13.0-DEV.9"
+    warn_msg = if VERSION >= v"1.12-beta"
         "WARNING: Imported binding LogicalOperators.^ was undeclared at import time during import to test_logicaloperators_undeclared.\n"
     else
         "WARNING: could not import LogicalOperators.^ into test_logicaloperators_undeclared"
