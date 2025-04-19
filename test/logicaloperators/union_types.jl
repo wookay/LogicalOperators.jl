@@ -17,6 +17,6 @@ using .LogicalOperators: AND, OR, NOT
 
 # julia/base/boot.jl
 # const NTuple{N,T} = Tuple{Vararg{T,N}}
-@test (NTuple{N,T} where {N,T}) === (Tuple{Vararg{T,N}} where {N, T})
+@test (NTuple{N,T} where {N, T}) === (Tuple{Vararg{T,N}} where {N, T})
 
 end # module test_logicaloperators_union_types

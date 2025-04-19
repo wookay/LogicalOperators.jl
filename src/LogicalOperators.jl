@@ -2,7 +2,8 @@ baremodule LogicalOperators
 
 export ∧, ∨, ¬
 
-using Base: Base, Vector, ==
+using Base: Base, Vector
+using .Base: length, +, ==, <=
 
 abstract type AbstractLogicalOperator{T} end
 
@@ -29,6 +30,10 @@ for (f, Op) in ((:wedge, :AND),
             s1.elements == s2.elements
         end
 
+        function Base.iterate(op::$Op{T}, i::Int=1) where T
+            (1 <= i <= length(op.elements)) ? (op.elements[i], i + 1) : nothing
+        end
+
         ($f)(x::T) where T = Base.Fix2($Op{T}, x)
         function ($f)(x::$Op{S1}, y::S2) where {S1, S2}
             T = Union{S1, S2}
@@ -39,6 +44,7 @@ for (f, Op) in ((:wedge, :AND),
             T = Union{Tup.parameters...}
             $Op{T}(Base.collect(T, elements))
         end
+
     end # @Base.eval begin
 end # for (f, Op)
 
