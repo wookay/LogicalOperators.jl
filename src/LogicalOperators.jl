@@ -1,15 +1,16 @@
 baremodule LogicalOperators
 
 export ∧, ∨, ¬
+export AbstractLogicalOperator, @logical_operator, @logicals
 
-using Base: Base, Vector
-using .Base: length, +, ==, <=
+using Base: Base
+using .Base: Vector, length, +, ==, <=
+using .Base: Module, @__LINE__, push!, esc
 
 abstract type AbstractLogicalOperator{T} end
 
-for (f, Op) in ((:wedge, :AND),
-                (:vee,   :OR))
-    @Base.eval begin
+macro logical_operator(Op::Symbol)
+    esc(quote
         struct $Op{T} <: AbstractLogicalOperator{T}
             elements::Vector{T} where T
 
@@ -33,7 +34,29 @@ for (f, Op) in ((:wedge, :AND),
         function Base.iterate(op::$Op{T}, i::Int=1) where T
             (1 <= i <= length(op.elements)) ? (op.elements[i], i + 1) : nothing
         end
+    end) # esc(quote
+end # macro logical_operator(Op)
 
+function eval_logicals(mod::Module, syms::Tup) where Tup <: NTuple{N, Symbol} where N
+    logical_macro = Symbol("@logical_operator")
+    expr = Expr(:block)
+    for op in syms
+        macro_expr = Expr(:macrocall, logical_macro, @__LINE__, op)
+        push!(expr.args, macro_expr)
+    end
+    Core.eval(mod, expr)
+end # function logicals(syms::Tup) where Tup <: NTuple{N, Symbol} where N
+
+macro logicals(ops::Symbol...)
+    mod = __module__
+    eval_logicals(mod, ops)
+end # macro logicals(ops::Symbol...)
+
+@logicals AND OR
+
+for (f, Op) in ((:wedge, :AND),
+                (:vee,   :OR))
+    @Base.eval begin
         ($f)(x::T) where T = Base.Fix2($Op{T}, x)
         function ($f)(x::$Op{S1}, y::S2) where {S1, S2}
             T = Union{S1, S2}
