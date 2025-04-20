@@ -1,7 +1,7 @@
 module test_logicaloperators_boolean
 
 using Test
-using LogicalOperators
+using LogicalOperators # ∧ \wedge   ∨ \vee   ¬ \neg
 using .LogicalOperators: AND, OR, NOT
 
 Base.Bool(and::AND{Bool}) = all(identity, and.elements)
@@ -17,6 +17,7 @@ import .LogicalOperators: NOT
 NOT(and::AND{Bool}) = NOT(Bool(and))
 NOT(or::OR{Bool}) = NOT(Bool(or))
 Base.Bool(not::NOT{Bool}) = !(not.x)
+@test Bool(¬true) === false
 @test Bool(NOT(true ∧ true)) === false
 @test Bool(NOT(false ∨ false))
 

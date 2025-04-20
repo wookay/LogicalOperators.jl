@@ -1,7 +1,7 @@
 module test_logicaloperators_show
 
 using Test
-using LogicalOperators
+using LogicalOperators # ∧ \wedge   ∨ \vee   ¬ \neg
 using .LogicalOperators: AND, OR, NOT
 
 Base.show(io::IO, and::AND{<:Union{Bool, Int}}) = join(io, and.elements, " ∧ ")

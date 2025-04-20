@@ -1,7 +1,7 @@
-module test_logicaloperators_logical
+module test_logicaloperators_and_or_not
 
 using Test
-using LogicalOperators # ∧ ∨ ¬
+using LogicalOperators # ∧ \wedge   ∨ \vee   ¬ \neg
 using .LogicalOperators: AND, OR, NOT
 
 @test ∧(1, 2) == AND(1, 2) == AND{Int}(1, 2)
@@ -18,4 +18,7 @@ using .LogicalOperators: AND, OR, NOT
 @test ¬1 == NOT(1) == NOT{Int}(1)
 @test NOT(1) isa NOT{Int}
 
-end # module test_logicaloperators_logical
+@test_throws MethodError AND{Int}("a", "b", "c")
+@test_throws MethodError AND{String}(1, 2)
+
+end # module test_logicaloperators_and_or_not
