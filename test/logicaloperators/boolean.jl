@@ -16,7 +16,7 @@ Base.Bool(or::OR{Bool}) = any(identity, or.elements)
 import .LogicalOperators: NOT
 NOT(and::AND{Bool}) = NOT(Bool(and))
 NOT(or::OR{Bool}) = NOT(Bool(or))
-Base.Bool(not::NOT{Bool}) = !(not.x)
+Base.Bool(not::NOT{Bool}) = !(first(not.elements))
 @test Bool(¬true) === false
 @test Bool(NOT(true ∧ true)) === false
 @test Bool(NOT(false ∨ false))

@@ -20,6 +20,9 @@ macro logical_operator(Op::Symbol)
             function $Op{T}(elements::T...) where T
                 new{T}(Base.collect(T, elements))
             end
+            function $Op()
+                new{Any}([])
+            end
             function $Op(elements...)
                 Tup = typeof(elements)
                 T = Union{Tup.parameters...}
@@ -52,15 +55,22 @@ macro logicals(ops::Symbol...)
     eval_logicals(mod, ops)
 end # macro logicals(ops::Symbol...)
 
-@logicals AND OR
+@logicals AND OR NOT
+
+
+# ∧ \wedge   ∨ \vee   ¬ \neg
 
 for (f, Op) in ((:wedge, :AND),
-                (:vee,   :OR))
+                (:vee,   :OR),
+                (:neg,   :NOT))
+
     @Base.eval begin
-        ($f)(x::T) where T = Base.Fix2($Op{T}, x)
         function ($f)(x::$Op{S1}, y::S2) where {S1, S2}
             T = Union{S1, S2}
             $Op{T}(Vector{T}(Base.vcat(x.elements, y)))
+        end
+        function ($f)()
+            $Op()
         end
         function ($f)(elements...)
             Tup = typeof(elements)
@@ -70,15 +80,6 @@ for (f, Op) in ((:wedge, :AND),
 
     end # @Base.eval begin
 end # for (f, Op)
-
-struct NOT{T} <: AbstractLogicalOperator{T}
-    x::T
-
-    NOT{T}(x::T) where {T} = new{T}(x)
-    NOT(x::T) where {T} = new{T}(x)
-end
-
-neg(x::T) where T = NOT{T}(x)
 
 const ∧ = wedge
 const ∨ = vee

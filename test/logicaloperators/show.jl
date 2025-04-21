@@ -12,7 +12,7 @@ Base.show(io::IO, or::OR{<:Union{Bool, Int}}) = join(io, or.elements, " ∨ ")
 @test sprint(show, true ∨ false) == "true ∨ false"
 @test sprint(show, 1 ∨ 2) == "1 ∨ 2"
 
-Base.show(io::IO, not::NOT{<:Union{Bool, Int}}) = print(io, "¬", not.x)
+Base.show(io::IO, not::NOT{<:Union{Bool, Int}}) = print(io, "¬", first(not.elements))
 @test sprint(show, ¬true) == "¬true"
 
 end # module test_logicaloperators_show
