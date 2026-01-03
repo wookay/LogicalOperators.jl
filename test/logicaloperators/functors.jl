@@ -5,6 +5,7 @@ using LogicalOperators: AND, OR
 
 and = AND{Function}(isone, isodd)
 @test all(f -> f(1), and.elements)
+@test length(and) == 2
 
 and = AND{Function}(iszero, iseven)
 @test all(f -> f(0), and.elements)

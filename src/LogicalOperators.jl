@@ -34,6 +34,10 @@ macro logical_operator(Op::Symbol)
             s1.elements == s2.elements
         end
 
+        function Base.length(op::$Op{T}) where T
+            length(op.elements)
+        end
+
         function Base.iterate(op::$Op{T}, i::Int=1) where T
             (1 <= i <= length(op.elements)) ? (op.elements[i], i + 1) : nothing
         end
