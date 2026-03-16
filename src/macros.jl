@@ -5,9 +5,9 @@ using .Base: esc, length, push!
 using .Base: +, ==, <=
 
 """
-    macro logical_operator(Op::Symbol)
+    macro logical(Op::Symbol)
 """
-macro logical_operator(Op::Symbol)
+macro logical(Op::Symbol)
     esc(quote
         struct $Op{T} <: AbstractLogicalOperator{T}
             elements::Vector{T} where T
@@ -40,24 +40,24 @@ macro logical_operator(Op::Symbol)
             (1 <= i <= length(op.elements)) ? (op.elements[i], i + 1) : nothing
         end
     end) # esc(quote
-end # macro logical_operator(::Symbol)
+end # macro logical(::Symbol)
 
-function eval_logicals(mod::Module, syms::Tup) where Tup <: NTuple{N, Symbol} where N
-    logical_macro = Symbol("@logical_operator")
+function eval_logical_macro(mod::Module, syms::Tup) where Tup <: NTuple{N, Symbol} where N
+    logical_macro = Symbol("@logical")
     expr = Expr(:block)
     for op in syms
         macro_expr = Expr(:macrocall, logical_macro, @__LINE__, op)
         push!(expr.args, macro_expr)
     end
     Core.eval(mod, expr)
-end # function eval_logicals(::Module, ::Tup) where Tup <: NTuple{N, Symbol} where N
+end # function eval_logical_macro(::Module, ::Tup) where Tup <: NTuple{N, Symbol} where N
 
 """
-    macro logicals(ops::Symbol...)
+    macro operators(ops::Symbol...)
 """
-macro logicals(ops::Symbol...)
+macro operators(ops::Symbol...)
     mod = __module__
-    eval_logicals(mod, ops)
-end # macro logicals(::Symbol...)
+    eval_logical_macro(mod, ops)
+end # macro operators(::Symbol...)
 
 # baremodule LogicalOperators

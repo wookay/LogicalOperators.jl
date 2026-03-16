@@ -5,7 +5,7 @@ using Base: Base, @__MODULE__
 # export AbstractLogicalOperator
 Base.include(@__MODULE__, "types.jl")
 
-# export @logical_operator, @logicals
+# export @logical, @operators
 Base.include(@__MODULE__, "macros.jl")
 
 # export AND, OR, XOR, NOT

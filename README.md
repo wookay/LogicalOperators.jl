@@ -4,6 +4,23 @@
 |:---------------------------------------:|:-------------------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][actions-img]][actions-url] |
 
+```
+julia> using LogicalOperators: AND, OR, XOR, NOT, ∧, ∨, ⊕, ¬
+
+julia> AND(1, 2) == 1 ∧ 2
+true
+
+julia> OR{Int}(1, 2, 3) == 1 ∨ 2 ∨ 3
+true
+
+julia> XOR("🧩", "🧩") == "🧩" ⊕ "🧩"
+true
+
+julia> NOT(true) == ¬true
+true
+```
+
+
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://wookay.github.io/docs/LogicalOperators.jl/
 

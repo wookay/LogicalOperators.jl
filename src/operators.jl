@@ -5,33 +5,44 @@
 # XOR  ⊕  \oplus
 # NOT  ¬  \neg
 
-@logicals AND OR XOR NOT
+@operators AND OR XOR NOT
 
 """
-    AND{T} <: AbstractLogicalOperator{T}
-
-∧  \\wedge
+```
+struct AND{T} <: AbstractLogicalOperator{T}
+    elements::Vector{T} where T
+end
+```
 """
 AND
 
-"""
-    OR{T} <: AbstractLogicalOperator{T}
 
-∨  \\vee
+"""
+```
+struct OR{T} <: AbstractLogicalOperator{T}
+    elements::Vector{T} where T
+end
+```
 """
 OR
 
-"""
-    XOR{T} <: AbstractLogicalOperator{T}
 
-⊕  \\oplus
+"""
+```
+struct XOR{T} <: AbstractLogicalOperator{T}
+    elements::Vector{T} where T
+end
+```
 """
 XOR
 
-"""
-    NOT{T} <: AbstractLogicalOperator{T}
 
-¬  \\neg
+"""
+```
+struct NOT{T} <: AbstractLogicalOperator{T}
+    elements::Vector{T} where T
+end
+```
 """
 NOT
 

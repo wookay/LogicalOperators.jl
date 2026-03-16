@@ -1,4 +1,5 @@
 using LogicalOperators
+using .LogicalOperators: AND, OR, XOR, NOT
 using Documenter
 
 makedocs(
@@ -13,5 +14,7 @@ makedocs(
     authors = "WooKyoung Noh",
     pages = Any[
         "Home" => "index.md",
+        "macros" => "macros.md",
+        "operators" => "operators.md",
     ],
 )

@@ -1,9 +1,3 @@
-```@docs
-LogicalOperators.AbstractLogicalOperator
-LogicalOperators.@logical_operator
-LogicalOperators.@logicals
-LogicalOperators.AND
-LogicalOperators.OR
-LogicalOperators.XOR
-LogicalOperators.NOT
-```
+# LogicalOperators.jl 🧩
+
+<https://github.com/wookay/LogicalOperators.jl>

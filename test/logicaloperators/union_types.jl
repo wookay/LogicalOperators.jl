@@ -1,8 +1,7 @@
 module test_logicaloperators_union_types
 
 using Test
-using LogicalOperators # ∧ \wedge   ∨ \vee   ¬ \neg
-using .LogicalOperators: AND, OR, NOT, ∧, ∨, ¬
+using LogicalOperators: AND, OR, NOT, ∧, ∨, ¬
 
 @test true ∧ true       == AND(true, true)      == AND{Bool}(true, true)
 @test true ∧ 42         == AND(true, 42)        == AND{Union{Bool, Int}}(true, 42)
