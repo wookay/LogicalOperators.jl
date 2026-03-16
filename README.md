@@ -4,7 +4,7 @@
 |:---------------------------------------:|:-------------------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][actions-img]][actions-url] |
 
-```
+```julia-repl
 julia> using LogicalOperators: AND, OR, XOR, NOT, ∧, ∨, ⊕, ¬
 
 julia> AND(1, 2) == 1 ∧ 2
