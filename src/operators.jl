@@ -7,6 +7,34 @@
 
 @logicals AND OR XOR NOT
 
+"""
+    AND{T} <: AbstractLogicalOperator{T}
+
+∧  \\wedge
+"""
+AND
+
+"""
+    OR{T} <: AbstractLogicalOperator{T}
+
+∨  \\vee
+"""
+OR
+
+"""
+    XOR{T} <: AbstractLogicalOperator{T}
+
+⊕  \\oplus
+"""
+XOR
+
+"""
+    NOT{T} <: AbstractLogicalOperator{T}
+
+¬  \\neg
+"""
+NOT
+
 for (f, Op) in ((:wedge, :AND),
                 (:vee,   :OR),
                 (:oplus, :XOR),

@@ -4,6 +4,9 @@ using .Base: Vector, Module, @__LINE__
 using .Base: esc, length, push!
 using .Base: +, ==, <=
 
+"""
+    macro logical_operator(Op::Symbol)
+"""
 macro logical_operator(Op::Symbol)
     esc(quote
         struct $Op{T} <: AbstractLogicalOperator{T}
@@ -49,6 +52,9 @@ function eval_logicals(mod::Module, syms::Tup) where Tup <: NTuple{N, Symbol} wh
     Core.eval(mod, expr)
 end # function eval_logicals(::Module, ::Tup) where Tup <: NTuple{N, Symbol} where N
 
+"""
+    macro logicals(ops::Symbol...)
+"""
 macro logicals(ops::Symbol...)
     mod = __module__
     eval_logicals(mod, ops)

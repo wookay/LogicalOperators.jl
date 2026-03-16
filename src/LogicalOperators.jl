@@ -3,7 +3,7 @@ baremodule LogicalOperators
 using Base: Base, @__MODULE__
 
 # export AbstractLogicalOperator
-abstract type AbstractLogicalOperator{T} end
+Base.include(@__MODULE__, "types.jl")
 
 # export @logical_operator, @logicals
 Base.include(@__MODULE__, "macros.jl")
