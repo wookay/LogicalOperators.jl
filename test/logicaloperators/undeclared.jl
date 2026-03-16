@@ -11,7 +11,7 @@ if VERSION > v"1.11"
     @test_warn warn_msg            @eval(using LogicalOperators: ^) # U+005E  ^
 else
     @test_throws UndefVarError(:^) @eval(using LogicalOperators: ^) # U+005E  ^
-end
+end # if
 
 using LogicalOperators: ∧  # U+2227  ∧ \wedge
 

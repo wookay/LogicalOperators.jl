@@ -1,7 +1,7 @@
 module test_logicaloperators_logicals
 
 using Test
-using LogicalOperators # @logicals
+using LogicalOperators: AbstractLogicalOperator, @logical_operator, @logicals
 
 @logicals SPACE COMMA
 @test SPACE("hello", "world") == SPACE{String}("hello", "world")
