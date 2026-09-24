@@ -4,6 +4,8 @@
 |:---------------------------------------:|:-------------------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][actions-img]][actions-url] |
 
+This is a Julia package that handles general logical operators.
+
 ```julia-repl
 julia> using LogicalOperators: AND, OR, XOR, NOT, ∧, ∨, ⊕, ¬
 
