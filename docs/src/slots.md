@@ -11,3 +11,8 @@ LogicalOperators.OR
 LogicalOperators.XOR
 LogicalOperators.NOT
 ```
+
+```@docs
+LogicalOperators.AbstractSlot
+LogicalOperators.@add_slot
+```

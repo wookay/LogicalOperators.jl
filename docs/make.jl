@@ -14,7 +14,7 @@ makedocs(
     authors = "WooKyoung Noh",
     pages = Any[
         "Home" => "index.md",
-        "macros" => "macros.md",
-        "operators" => "operators.md",
+        "@logic" => "logic.md",
+        "Slots" => "slots.md",
     ],
 )

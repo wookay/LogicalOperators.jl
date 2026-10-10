@@ -2,14 +2,11 @@ baremodule LogicalOperators
 
 using Base: Base, @__MODULE__
 
-# export AbstractLogicalOperator
-Base.include(@__MODULE__, "types.jl")
+export @logic
+Base.include(@__MODULE__, "logic.jl")
 
-# export @logical, @operators
-Base.include(@__MODULE__, "macros.jl")
-
-# export AND, OR, XOR, NOT
-# export ∧,   ∨,  ⊕,   ¬
-Base.include(@__MODULE__, "operators.jl")
+# AND, OR, XOR, NOT
+# ∧,   ∨,  ⊕,   ¬
+Base.include(@__MODULE__, "slots.jl")
 
 end # baremodule LogicalOperators
