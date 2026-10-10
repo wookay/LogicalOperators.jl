@@ -5,6 +5,8 @@
 | [![][docs-latest-img]][docs-latest-url] | [![][actions-img]][actions-url] |
 
 This is a Julia package that handles general logical operators.
+Currently, it is a data structure similar to a `Vector`.
+I suppose I'll need to add some special features that distinguish it from a `Vector`.
 
 ```julia-repl
 julia> using LogicalOperators: AND, OR, XOR, NOT, ∧, ∨, ⊕, ¬
@@ -13,9 +15,6 @@ julia> AND(1, 2) == 1 ∧ 2
 true
 
 julia> OR{Int}(1, 2, 3) == 1 ∨ 2 ∨ 3
-true
-
-julia> XOR("🧩", "🧩") == "🧩" ⊕ "🧩"
 true
 
 julia> NOT(true) == ¬true
