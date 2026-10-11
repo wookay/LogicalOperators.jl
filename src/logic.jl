@@ -1,6 +1,7 @@
 # baremodule LogicalOperators
 
-using .Base: :, ∘, in, ndigits, max, first, string, lpad, repeat,
+using .Base: :, ∘, !, in, ndigits, max, first, string, lpad, repeat,
+             Vector, isempty, push!, pop!,
              print, println, printstyled, stdout,
              VERSION, @v_str, >=
 
@@ -24,35 +25,59 @@ function print_0b(io::IO)
     printstyled(io, "0b"; color = :light_black)
 end # function print_0b
 
-function debug_bitwise_expr(io::IO, mod::Module, num_pad::Int, op::Symbol, ex::Expr; cont::Bool)
-    if cont
-        return debug_bitwise_body(io, mod, num_pad, ex.args...; calculated = false)
-    else
-        intermediate = true
-        return (Core.eval(mod, ex), intermediate)
-    end
-end # function debug_bitwise_expr
+struct BitwiseUnit
+    op::Symbol
+    lhs
+    printed_already::Bool
+end
 
-function debug_bitwise_body(io::IO, mod::Module, num_pad::Int, op::Symbol, prev, x; calculated::Bool)
-    if prev === nothing
-        return (x, false)
-    end
+struct BitwiseState
+    stack::Vector{BitwiseUnit}
+    BitwiseState() = new([])
+end
+
+function debug_bitwise_expr(io::IO, mod::Module, num_pad::Int, state::BitwiseState, op::Symbol, ex::Expr)
+   if isempty(state.stack)
+       rhs = Core.eval(mod, ex)
+       debug_bitwise_body(io, mod, num_pad, false, rhs, ex.args...)
+       push!(state.stack, BitwiseUnit(op, rhs, true))
+   else
+       rhs = Core.eval(mod, ex)
+       debug_bitwise_body(io, mod, num_pad, false, rhs, ex.args...)
+       unit = pop!(state.stack)
+       evaluated = Core.eval(mod, Expr(:call, unit.op, unit.lhs, rhs))
+       debug_bitwise_body(io, mod, num_pad, false, evaluated, unit.op, unit.lhs, rhs)
+   end
+end # function debug_bitwise_expr ex::Expr
+
+function debug_bitwise_expr(io::IO, mod::Module, num_pad::Int, state::BitwiseState, op::Symbol, x)
+   if isempty(state.stack)
+       push!(state.stack, BitwiseUnit(op, x, false))
+   else
+       unit = pop!(state.stack)
+       ex = Expr(:call, unit.op, unit.lhs, x)
+       evaluated = Core.eval(mod, ex)
+       debug_bitwise_body(io, mod, num_pad, unit.printed_already, evaluated, ex.args...)
+   end
+end # function debug_bitwise_expr x
+
+function debug_bitwise_body(io::IO, mod::Module, num_pad::Int, printed_already::Bool, evaluated, op::Symbol, x, y)
     bin_pad = get_bin_pad(num_pad)
-    print(io, lpad(" ", 2))
-    print(io, " ")
-    print_0b(io)
-    print(io, string(prev, base=2, pad=bin_pad), " ")
-    if calculated
-         printstyled(io, lpad(prev, num_pad); color = :green)
-    else
-         printstyled(io, lpad(prev, num_pad))
+    if !printed_already
+        print(io, lpad(" ", 2))
+        print(io, " ")
+        print_0b(io)
+        print(io, string(x, base=2, pad=bin_pad), " ")
+        print(io, lpad(x, num_pad))
+        println(io)
     end
-    println(io)
+
     printstyled(io, lpad(op, 2); color = :cyan)
     print(io, " ")
     print_0b(io)
-    println(io, string(   x, base=2, pad=bin_pad), " ", lpad(   x, num_pad))
-    return debug_bitwise_expr(io, mod, num_pad, op, Expr(:call, op, prev, x); cont = false)
+    println(io, string(y, base=2, pad=bin_pad), " ", lpad(y, num_pad))
+
+    debug_bitwise_result(io, mod, num_pad, evaluated)
 end # function debug_bitwise_body
 
 function debug_bitwise_result(io::IO, mod::Module, num_pad::Int, result)
@@ -74,16 +99,10 @@ function debug_bitwise(io::IO, mod::Module, expr::Expr)
         debug_bitwise_result(io, mod, num_pad, result)
     elseif op in (:&, :|)
         num_pad = get_max_ndigits(mod, expr)
-        result = nothing
-        intermediate = false
+        state = BitwiseState()
         for x in expr.args[2:end]
-            if x isa Expr
-                (result, intermediate) = debug_bitwise_expr(io, mod, num_pad, op, x::Expr; cont = true)
-            else
-                (result, intermediate) = debug_bitwise_body(io, mod, num_pad, op, result, x; calculated = intermediate)
-            end
+            debug_bitwise_expr(io, mod, num_pad, state, op, x)
         end
-        debug_bitwise_result(io, mod, num_pad, result)
     else # short-circuiting booleans
         debug_boolean(io, mod, expr)
     end
