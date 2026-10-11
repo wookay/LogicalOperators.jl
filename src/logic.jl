@@ -22,8 +22,7 @@ function get_max_ndigits(mod::Module, expr::Expr)::Int
 end # function get_max_ndigits
 
 function print_0b(io::IO)
-    print(io, "0")
-    printstyled(io, "b"; color = :gray)
+    printstyled(io, "0b"; color = :light_black)
 end # function print_0b
 
 function debug_bitwise_expr(io::IO, mod::Module, num_pad::Int, op::Symbol, ex::Expr; cont::Bool)
