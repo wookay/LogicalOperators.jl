@@ -2,11 +2,12 @@
 
 using .Base: :, ∘, !, in, ndigits, max, first, string, lpad, repeat,
              Vector, isempty, push!, pop!,
+             Bool,
              print, println, printstyled, stdout,
              VERSION, @v_str, >=
 
 function get_bin_pad(num_pad::Int)::Int
-    Base.:(^)(2, num_pad)
+    Base.:(^)(2, num_pad) + 1
 end # function get_bin_pad
 
 function get_max_ndigits(mod::Module, expr::Expr)::Int
@@ -15,7 +16,8 @@ function get_max_ndigits(mod::Module, expr::Expr)::Int
         if x isa Expr
             max_ndigits = max(max_ndigits, get_max_ndigits(mod, x))
         else
-            max_ndigits = max(max_ndigits, ndigits(x))
+            nx = x isa Symbol ? Core.getglobal(mod, x) : x
+            max_ndigits = max(max_ndigits, ndigits(nx))
         end
     end
     max_ndigits
@@ -67,15 +69,17 @@ function debug_bitwise_body(io::IO, mod::Module, num_pad::Int, printed_already::
         print(io, lpad(" ", 2))
         print(io, " ")
         print_0b(io)
-        print(io, string(x, base=2, pad=bin_pad), " ")
-        print(io, lpad(x, num_pad))
+        nx = x isa Symbol ? Core.getglobal(mod, x) : x
+        print(io, string(nx, base=2, pad=bin_pad), " ")
+        print(io, lpad(string(x), num_pad))
         println(io)
     end
 
     printstyled(io, lpad(op, 2); color = :cyan)
     print(io, " ")
     print_0b(io)
-    println(io, string(y, base=2, pad=bin_pad), " ", lpad(y, num_pad))
+    ny = y isa Symbol ? Core.getglobal(mod, y) : y
+    println(io, string(ny, base=2, pad=bin_pad), " ", lpad(string(y), num_pad))
 
     debug_bitwise_result(io, mod, num_pad, evaluated)
 end # function debug_bitwise_body
@@ -88,6 +92,7 @@ function debug_bitwise_result(io::IO, mod::Module, num_pad::Int, result)
     print(io, string(result, base=2, pad=bin_pad), " ")
     printstyled(io, lpad(result, num_pad); color = :green)
     println(io)
+    !Base.isinteractive() && println(io)
     return result
 end # function debug_bitwise_result
 
@@ -97,7 +102,7 @@ function debug_bitwise(io::IO, mod::Module, expr::Expr)
         result = expr.args[2]
         num_pad = ndigits(result) 
         debug_bitwise_result(io, mod, num_pad, result)
-    elseif op in (:&, :|)
+    elseif op in (:&, :|, :⊻)
         num_pad = get_max_ndigits(mod, expr)
         state = BitwiseState()
         for x in expr.args[2:end]
