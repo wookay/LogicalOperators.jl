@@ -3,7 +3,6 @@
 using .Base: :, ∘, in, ndigits, max, first, string, lpad, repeat,
              print, println, printstyled, stdout,
              VERSION, @v_str, >=
-using .Base: @info #
 
 function get_bin_pad(num_pad::Int)::Int
     Base.:(^)(2, num_pad)
@@ -27,15 +26,16 @@ end # function print_0b
 
 function debug_bitwise_expr(io::IO, mod::Module, num_pad::Int, op::Symbol, ex::Expr; cont::Bool)
     if cont
-        debug_bitwise_body(io, mod, num_pad, ex.args...; calculated = false)
+        return debug_bitwise_body(io, mod, num_pad, ex.args...; calculated = false)
     else
-        Core.eval(mod, ex)
+        intermediate = true
+        return (Core.eval(mod, ex), intermediate)
     end
 end # function debug_bitwise_expr
 
 function debug_bitwise_body(io::IO, mod::Module, num_pad::Int, op::Symbol, prev, x; calculated::Bool)
     if prev === nothing
-        return x
+        return (x, false)
     end
     bin_pad = get_bin_pad(num_pad)
     print(io, lpad(" ", 2))
@@ -52,7 +52,7 @@ function debug_bitwise_body(io::IO, mod::Module, num_pad::Int, op::Symbol, prev,
     print(io, " ")
     print_0b(io)
     println(io, string(   x, base=2, pad=bin_pad), " ", lpad(   x, num_pad))
-    debug_bitwise_expr(io, mod, num_pad, op, Expr(:call, op, prev, x); cont = false)
+    return debug_bitwise_expr(io, mod, num_pad, op, Expr(:call, op, prev, x); cont = false)
 end # function debug_bitwise_body
 
 function debug_bitwise_result(io::IO, mod::Module, num_pad::Int, result)
@@ -75,11 +75,12 @@ function debug_bitwise(io::IO, mod::Module, expr::Expr)
     elseif op in (:&, :|)
         num_pad = get_max_ndigits(mod, expr)
         result = nothing
+        intermediate = false
         for x in expr.args[2:end]
             if x isa Expr
-                result = debug_bitwise_expr(io, mod, num_pad, op, x::Expr; cont = true)
+                (result, intermediate) = debug_bitwise_expr(io, mod, num_pad, op, x::Expr; cont = true)
             else
-                result = debug_bitwise_body(io, mod, num_pad, op, result, x; calculated = false)
+                (result, intermediate) = debug_bitwise_body(io, mod, num_pad, op, result, x; calculated = intermediate)
             end
         end
         debug_bitwise_result(io, mod, num_pad, result)
