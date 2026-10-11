@@ -1,4 +1,4 @@
-module test_logicaloperators_splatting
+module test_slots_splatting
 
 using Test
 using LogicalOperators: AND, OR, ∧, ∨
@@ -9,4 +9,4 @@ using LogicalOperators: AND, OR, ∧, ∨
 @test AND((1 ∧ 2)..., 3) == 1 ∧ 2 ∧ 3
 @test OR((1 ∨ 2)..., 3) == 1 ∨ 2 ∨ 3
 
-end # module test_logicaloperators_splatting
+end # module test_slots_splatting

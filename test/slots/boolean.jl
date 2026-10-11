@@ -1,4 +1,4 @@
-module test_logicaloperators_boolean
+module test_slots_boolean
 
 using Test
 using LogicalOperators: AND, OR, NOT, ∧, ∨, ¬
@@ -20,4 +20,4 @@ Base.Bool(not::NOT{Bool}) = !(first(not.elements))
 @test Bool(NOT(true ∧ true)) === false
 @test Bool(NOT(false ∨ false))
 
-end # module test_logicaloperators_boolean
+end # module test_slots_boolean

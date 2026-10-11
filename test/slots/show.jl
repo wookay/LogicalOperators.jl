@@ -1,4 +1,4 @@
-module test_logicaloperators_show
+module test_slots_show
 
 using Test
 using LogicalOperators: AND, OR, NOT, ∧, ∨, ¬
@@ -14,4 +14,4 @@ Base.show(io::IO, or::OR{<:Union{Bool, Int}}) = join(io, or.elements, " ∨ ")
 Base.show(io::IO, not::NOT{<:Union{Bool, Int}}) = print(io, "¬", first(not.elements))
 @test sprint(show, ¬true) == "¬true"
 
-end # module test_logicaloperators_show
+end # module test_slots_show

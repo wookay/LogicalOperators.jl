@@ -1,11 +1,12 @@
-module test_logicaloperators_logic
+module test_logic_short_circuiting_booleans
 
 using Test
 using LogicalOperators
 
-@test @logic(4 & 10) == 0
-
 x = 3
+@test @logic(x > 1)
+@test @logic(x < 1) === false
+@test @logic(x > 1 && x < 10)
 @test @logic(x > 1 && x < 10 && x isa Int)
 @test @logic(x > 1 && x < 10 && x isa String) === false
 @test @logic(x > 1 && x isa String && x < 10) === false
@@ -13,4 +14,4 @@ x = 3
 @test @logic(x < 1 || x < 10 && x isa Int)
 @test @logic(x < 1 || x > 10 && x isa Int) === false
 
-end # module test_logicaloperators_logic
+end # module test_logic_short_circuiting_booleans

@@ -1,4 +1,4 @@
-module test_logicaloperators_iterate
+module test_slots_iterate
 
 using Test
 using LogicalOperators: AND
@@ -10,4 +10,4 @@ end
 
 @test vals == [1, 2, 3]
 
-end # module test_logicaloperators_iterate
+end # module test_slots_iterate

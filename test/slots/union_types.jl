@@ -1,4 +1,4 @@
-module test_logicaloperators_union_types
+module test_slots_union_types
 
 using Test
 using LogicalOperators: AND, OR, NOT, ∧, ∨, ¬
@@ -18,4 +18,4 @@ using LogicalOperators: AND, OR, NOT, ∧, ∨, ¬
 # const NTuple{N,T} = Tuple{Vararg{T,N}}
 @test (NTuple{N,T} where {N, T}) === (Tuple{Vararg{T,N}} where {N, T})
 
-end # module test_logicaloperators_union_types
+end # module test_slots_union_types

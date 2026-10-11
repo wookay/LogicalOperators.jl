@@ -1,4 +1,4 @@
-module test_logicaloperators_custom_slots
+module test_slots_custom_slots
 
 using Test
 using LogicalOperators: AbstractSlot, @add_slot
@@ -19,4 +19,4 @@ Base.show(io::IO, comma::COMMA{<:Union{Int, String}}) = join(io, comma.elements,
 Base.show(io::IO, space::LF{String}) = join(io, space.elements, "\n")
 @test sprint(show, LF("hello", "world")) == "hello\nworld"
 
-end # module test_logicaloperators_custom_slots
+end # module test_slots_custom_slots

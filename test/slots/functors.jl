@@ -1,4 +1,4 @@
-module test_logicaloperators_functors
+module test_slots_functors
 
 using Test
 using LogicalOperators: AND, OR
@@ -16,4 +16,4 @@ or = OR{Function}(isone, isodd)
 or = OR{Function}(iszero, iseven)
 @test any(f -> f(0), or.elements)
 
-end # module test_logicaloperators_functors
+end # module test_slots_functors

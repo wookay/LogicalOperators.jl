@@ -1,4 +1,4 @@
-module test_logicaloperators_slots
+module test_slots_slots
 
 using Test
 using LogicalOperators: AND, OR, XOR, NOT, ∧, ∨, ⊕, ¬
@@ -24,4 +24,4 @@ using LogicalOperators: AND, OR, XOR, NOT, ∧, ∨, ⊕, ¬
 @test_throws MethodError AND{Int}("a", "b", "c")
 @test_throws MethodError AND{String}(1, 2)
 
-end # module test_logicaloperators_slots
+end # module test_slots_slots
