@@ -13,25 +13,34 @@ To help understanding the bitwise (`&`, `|`), short-circuiting booleans (`&&`, `
 ```julia-repl
 julia> using LogicalOperators
 
-julia> @logic 4 & 10
-   0b00100  4
- & 0b01010 10
-   0b00000  0
-0
+julia> @logic 3 & 10
+   0b0011  3
+ & 0b1010 10
+   0b0010  2
+2
 
-julia> @logic 4 | 10
-   0b00100  4
- | 0b01010 10
-   0b01110 14
-14
-
-julia> @logic 4 | 10 | 1
-   0b00100  4
- | 0b01010 10
-   0b01110 14
- | 0b00001  1
-   0b01111 15
+julia> @logic 10 | 7
+   0b1010 10
+ | 0b0111  7
+   0b1111 15
 15
+
+julia> @logic 3 & 10 | 7
+   0b0011  3
+ & 0b1010 10
+   0b0010  2
+ | 0b0111  7
+   0b0111  7
+7
+
+julia> @logic 3 & (10 | 7)
+   0b1010 10
+ | 0b0111  7
+   0b1111 15
+   0b0011  3
+ & 0b1111 15
+   0b0011  3
+3
 ```
 
 * [Hexagrams 卦](https://github.com/wookay/Hexagrams.jl/blob/main/test/hexagrams/logic.jl) example.

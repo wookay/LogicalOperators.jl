@@ -1,113 +1,126 @@
 # baremodule LogicalOperators
 
-using .Base: :, ∘, !, in, ndigits, max, first, string, lpad, repeat,
-             Vector, isempty, push!, pop!,
-             Bool,
+using .Base: !, :, ∘, +, -,
+             ndigits, min, max, iszero,
+             in, findfirst, first, length, bitstring, string, lpad,
+             Bool, Vector, isempty, push!, pop!,
              print, println, printstyled, stdout,
              VERSION, @v_str, >=
 
-function get_bin_pad(num_pad::Int)::Int
-    Base.:(^)(2, num_pad) + 1
-end # function get_bin_pad
+struct BitwiseUnit
+    op::Union{Nothing, Symbol}
+    bin
+    num
+    calculated::Bool
+end
 
-function get_max_ndigits(mod::Module, expr::Expr)::Int
-    max_ndigits = 0
-    for x in expr.args[2:end]
-        if x isa Expr
-            max_ndigits = max(max_ndigits, get_max_ndigits(mod, x))
-        else
-            nx = x isa Symbol ? Core.getglobal(mod, x) : x
-            max_ndigits = max(max_ndigits, ndigits(nx))
-        end
-    end
-    max_ndigits
-end # function get_max_ndigits
+struct BitwiseOp
+    lhs
+    calc_already::Bool
+end
+
+struct BitwiseState
+    output::Vector{BitwiseUnit}
+    stack::Vector{BitwiseOp}
+    BitwiseState() = new([], [])
+end
+
+function get_bin_pad(x)
+    bitstr = bitstring(x)
+    first_one_idx = findfirst(==('1'), bitstr)
+    nbit = iszero(x) ? 2 : 8
+    bitsize = VERSION >= v"1.14-DEV" ? min(Core.bitsizeof(x), nbit) : nbit
+    bin_pad = first_one_idx === nothing ? bitsize : length(bitstr) - first_one_idx + 1
+    return bin_pad
+end # function get_bin_pad
 
 function print_0b(io::IO)
     printstyled(io, "0b"; color = :light_black)
 end # function print_0b
 
-struct BitwiseUnit
-    op::Symbol
-    lhs
-    printed_already::Bool
-end
-
-struct BitwiseState
-    stack::Vector{BitwiseUnit}
-    BitwiseState() = new([])
-end
-
-function debug_bitwise_expr(io::IO, mod::Module, num_pad::Int, state::BitwiseState, op::Symbol, ex::Expr)
-   if isempty(state.stack)
-       rhs = Core.eval(mod, ex)
-       debug_bitwise_body(io, mod, num_pad, false, rhs, ex.args...)
-       push!(state.stack, BitwiseUnit(op, rhs, true))
-   else
-       rhs = Core.eval(mod, ex)
-       debug_bitwise_body(io, mod, num_pad, false, rhs, ex.args...)
-       unit = pop!(state.stack)
-       evaluated = Core.eval(mod, Expr(:call, unit.op, unit.lhs, rhs))
-       debug_bitwise_body(io, mod, num_pad, false, evaluated, unit.op, unit.lhs, rhs)
-   end
-end # function debug_bitwise_expr ex::Expr
-
-function debug_bitwise_expr(io::IO, mod::Module, num_pad::Int, state::BitwiseState, op::Symbol, x)
-   if isempty(state.stack)
-       push!(state.stack, BitwiseUnit(op, x, false))
-   else
-       unit = pop!(state.stack)
-       ex = Expr(:call, unit.op, unit.lhs, x)
-       evaluated = Core.eval(mod, ex)
-       debug_bitwise_body(io, mod, num_pad, unit.printed_already, evaluated, ex.args...)
-   end
-end # function debug_bitwise_expr x
-
-function debug_bitwise_body(io::IO, mod::Module, num_pad::Int, printed_already::Bool, evaluated, op::Symbol, x, y)
-    bin_pad = get_bin_pad(num_pad)
-    if !printed_already
-        print(io, lpad(" ", 2))
+function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
+    (op_pad, bin_pad, num_pad) = (0, 2, 0)
+    for unit in state.output
+        op_pad  = max(op_pad,  unit.op === nothing ? 2 : length(String(unit.op)))
+        bin_pad = max(bin_pad, get_bin_pad(unit.bin))
+        num = unit.num isa Symbol ? Core.getglobal(mod, unit.num) : unit.num
+        num_pad = max(num_pad, ndigits(num))
+    end
+    for unit in state.output
+        if unit.op === nothing
+            print(io, lpad("", op_pad))
+        else
+            printstyled(io, lpad(unit.op, op_pad); color = :cyan)
+        end
         print(io, " ")
         print_0b(io)
-        nx = x isa Symbol ? Core.getglobal(mod, x) : x
-        print(io, string(nx, base=2, pad=bin_pad), " ")
-        print(io, lpad(string(x), num_pad))
+        print(io, string(unit.bin, base=2, pad=bin_pad), " ")
+        str_num = lpad(string(unit.num), num_pad)
+        if unit.calculated
+            printstyled(io, str_num; color = :green)
+        else
+            print(io, str_num)
+        end
         println(io)
     end
-
-    printstyled(io, lpad(op, 2); color = :cyan)
-    print(io, " ")
-    print_0b(io)
-    ny = y isa Symbol ? Core.getglobal(mod, y) : y
-    println(io, string(ny, base=2, pad=bin_pad), " ", lpad(string(y), num_pad))
-
-    debug_bitwise_result(io, mod, num_pad, evaluated)
-end # function debug_bitwise_body
-
-function debug_bitwise_result(io::IO, mod::Module, num_pad::Int, result)
-    bin_pad = get_bin_pad(num_pad)
-    print(io, lpad(" ", 2))
-    print(io, " ")
-    print_0b(io)
-    print(io, string(result, base=2, pad=bin_pad), " ")
-    printstyled(io, lpad(result, num_pad); color = :green)
-    println(io)
     !Base.isinteractive() && println(io)
-    return result
-end # function debug_bitwise_result
+end # function print_bitwise_output
+
+function bitwise_expr(mod::Module, state::BitwiseState, op::Symbol, ex::Expr)
+   rhs = Core.eval(mod, ex)
+   bitwise_operation(mod, state, false, rhs, ex.args...)
+   if isempty(state.stack)
+       push!(state.stack, BitwiseOp(rhs, true))
+   else
+       unit = pop!(state.stack)
+       evaluated = Core.eval(mod, Expr(:call, op, unit.lhs, rhs))
+       bitwise_operation(mod, state, false, evaluated, op, unit.lhs, rhs)
+   end
+end # function bitwise_expr ex::Expr
+
+function bitwise_expr(mod::Module, state::BitwiseState, op::Symbol, x)
+   if isempty(state.stack)
+       push!(state.stack, BitwiseOp(x, false))
+   else
+       unit = pop!(state.stack)
+       ex = Expr(:call, op, unit.lhs, x)
+       calculated = Core.eval(mod, ex)
+       bitwise_operation(mod, state, unit.calc_already, calculated, ex.args...)
+   end
+end # function bitwise_expr x
+
+function bitwise_calculated(mod::Module, state::BitwiseState, calculated)
+    push!(state.output, BitwiseUnit(nothing, calculated, calculated, true))
+    return calculated
+end # function bitwise_calculated
+
+function bitwise_operation(mod::Module, state::BitwiseState, calc_already::Bool, calculated, op::Symbol, x, y)
+    if !calc_already
+        nx = x isa Symbol ? Core.getglobal(mod, x) : x
+        push!(state.output, BitwiseUnit(nothing, nx, x, false))
+    end
+
+    ny = y isa Symbol ? Core.getglobal(mod, y) : y
+    push!(state.output, BitwiseUnit(op, ny, y, false))
+
+    bitwise_calculated(mod, state, calculated)
+    return calculated
+end # function bitwise_operation
 
 function debug_bitwise(io::IO, mod::Module, expr::Expr)
     op = first(expr.args)
     if op === :identity
-        result = expr.args[2]
-        num_pad = ndigits(result) 
-        debug_bitwise_result(io, mod, num_pad, result)
-    elseif op in (:&, :|, :⊻)
-        num_pad = get_max_ndigits(mod, expr)
+        calculated = expr.args[2]
+        state = BitwiseState()
+        bitwise_calculated(mod, state, calculated)
+        print_bitwise_output(io, mod, state)
+        return calculated
+    elseif op in (:(&), :(|), :(⊻), :(<<), :(>>), Symbol("<<<"), Symbol(">>>"))
         state = BitwiseState()
         for x in expr.args[2:end]
-            debug_bitwise_expr(io, mod, num_pad, state, op, x)
+            bitwise_expr(mod, state, op, x)
         end
+        print_bitwise_output(io, mod, state)
     else # short-circuiting booleans
         debug_boolean(io, mod, expr)
     end
