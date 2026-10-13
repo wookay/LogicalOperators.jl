@@ -3,6 +3,8 @@ module test_logic_bitwise
 using Test
 using LogicalOperators
 
+include("settings.jl")
+
 @test @logic(3 & 10)       ==    2
 @test @logic(10 | 7)       ==   15
 @test @logic(3 &  10 | 7)  ==    7

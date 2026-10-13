@@ -1,11 +1,21 @@
 # baremodule LogicalOperators
 
 using .Base: !, :, ∘, +, -,
-             ndigits, min, max, iszero,
+             ndigits, min, max, iszero, enumerate,
              in, findfirst, first, length, bitstring, string, lpad,
              Bool, Vector, isempty, push!, pop!,
              print, println, printstyled, stdout,
              VERSION, @v_str, >=
+
+mutable struct DebugSettings
+    verbose::Bool
+end
+
+const Debug = DebugSettings(true)
+
+function debug_logic(; verbose::Bool = true)
+    Debug.verbose = verbose
+end
 
 struct BitwiseUnit
     op::Union{Nothing, Symbol}
@@ -14,14 +24,14 @@ struct BitwiseUnit
     calculated::Bool
 end
 
-struct BitwiseOp
+struct BitwiseOperand
     lhs
     calc_already::Bool
 end
 
 struct BitwiseState
     output::Vector{BitwiseUnit}
-    stack::Vector{BitwiseOp}
+    stack::Vector{BitwiseOperand}
     BitwiseState() = new([], [])
 end
 
@@ -39,6 +49,7 @@ function print_0b(io::IO)
 end # function print_0b
 
 function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
+    Debug.verbose || return
     (op_pad, bin_pad, num_pad) = (0, 2, 0)
     for unit in state.output
         op_pad  = max(op_pad,  unit.op === nothing ? 2 : length(String(unit.op)))
@@ -70,22 +81,22 @@ function bitwise_expr(mod::Module, state::BitwiseState, op::Symbol, ex::Expr)
    rhs = Core.eval(mod, ex)
    bitwise_operation(mod, state, false, rhs, ex.args...)
    if isempty(state.stack)
-       push!(state.stack, BitwiseOp(rhs, true))
+       push!(state.stack, BitwiseOperand(rhs, true))
    else
-       unit = pop!(state.stack)
-       evaluated = Core.eval(mod, Expr(:call, op, unit.lhs, rhs))
-       bitwise_operation(mod, state, false, evaluated, op, unit.lhs, rhs)
+       operand = pop!(state.stack)
+       evaluated = Core.eval(mod, Expr(:call, op, operand.lhs, rhs))
+       bitwise_operation(mod, state, false, evaluated, op, operand.lhs, rhs)
    end
 end # function bitwise_expr ex::Expr
 
 function bitwise_expr(mod::Module, state::BitwiseState, op::Symbol, x)
    if isempty(state.stack)
-       push!(state.stack, BitwiseOp(x, false))
+       push!(state.stack, BitwiseOperand(x, false))
    else
-       unit = pop!(state.stack)
-       ex = Expr(:call, op, unit.lhs, x)
+       operand = pop!(state.stack)
+       ex = Expr(:call, op, operand.lhs, x)
        calculated = Core.eval(mod, ex)
-       bitwise_operation(mod, state, unit.calc_already, calculated, ex.args...)
+       bitwise_operation(mod, state, operand.calc_already, calculated, ex.args...)
    end
 end # function bitwise_expr x
 
@@ -122,47 +133,88 @@ function debug_bitwise(io::IO, mod::Module, expr::Expr)
         end
         print_bitwise_output(io, mod, state)
     else # short-circuiting booleans
-        debug_boolean(io, mod, expr)
+        debug_short_circuiting_booleans(io, mod, expr)
     end
 end # function debug_bitwise
 
-function debug_boolean_body(io::IO, mod::Module, op::Symbol, ex::Expr)::Bool
-    ret = Core.eval(mod, ex)
-    if ret
-        printstyled(io, ex; color = :green)
+struct CircuitUnit
+    expr
+    boolean::Bool
+end
+
+struct CircuitExpr
+    head::Symbol
+    args::Vector{Any}
+end
+
+function print_boolean_output(io::IO, boolean::Bool, x)
+    if boolean
+        printstyled(io, x; color = :green)
     else
-        if VERSION >= v"1.7" # printstyled(; underline)
-            printstyled(io, ex; color = :red, underline = true)
+        if VERSION >= v"1.7"
+            printstyled(io, x; color = :red, underline = true)
         else
-            printstyled(io, ex; color = :red)
+            printstyled(io, x; color = :red)
         end
     end
-    ret
-end # function debug_boolean_body
+end # function print_boolean_output
 
-function debug_boolean(io::IO, mod::Module, expr::Expr)
-    debug_more = false
-    op = expr.head
-    ex = first(expr.args)
-    if op === :(&&)
-       debug_boolean_body(io, mod, op, ex)
-       debug_more = true
-    elseif op === :(||)
-       debug_boolean_body(io, mod, op, ex)
-       debug_more = true
-    else
-       debug_boolean_body(io, mod, op, expr)
-    end
-    if debug_more
-        print(io, " ")
-        printstyled(io, op; color = :cyan)
-        print(io, " ")
-        debug_boolean(io, mod, expr.args[2:end]...)
-    else
-        println(io)
-    end
-end # function debug_boolean
+function print_circuit_output(io::IO, mod::Module, bool::Bool)
+    print_boolean_output(io, bool, bool)
+end # function print_circuit_output bool
 
+function print_circuit_output(io::IO, mod::Module, unit::CircuitUnit)
+    print_boolean_output(io, unit.boolean, unit.expr)
+end # function print_circuit_output unit
+
+function print_circuit_output(io::IO, mod::Module, circuit_expr::CircuitExpr)
+    if circuit_expr.head in (:&& , :||)
+        for (idx, unit) in enumerate(circuit_expr.args)
+            # if unit isa CircuitExpr
+            #     print(io, "(")
+            # end
+            print_circuit_output(io, mod, unit)
+            # if unit isa CircuitExpr
+            #     print(io, ")")
+            # end
+            1 == idx && print(io, " ", circuit_expr.head, " ")
+        end
+    end
+end # function print_circuit_output circuit_expr
+
+function print_circuit_expr(io::IO, mod::Module, expr::Union{CircuitExpr, CircuitUnit})
+    Debug.verbose || return
+    print_circuit_output(io, mod, expr)
+    println(io)
+    !Base.isinteractive() && println(io)
+end # function print_circuit_expr
+
+function map_circuit_expr(mod::Module, expr::Expr)::Union{CircuitExpr, CircuitUnit}
+    if expr.head in (:&& , :||)
+        circuit_expr = CircuitExpr(expr.head, [])
+        for arg in expr.args
+            if arg isa Expr
+                ex = map_circuit_expr(mod, arg)
+                push!(circuit_expr.args, ex)
+            else
+                push!(circuit_expr.args, arg)
+            end
+        end
+        circuit_expr
+    else
+        boolean = Core.eval(mod, expr)
+        CircuitUnit(expr, boolean)
+    end
+end # function map_circuit_expr
+
+function debug_short_circuiting_booleans(io::IO, mod::Module, unit::CircuitUnit)
+    print_circuit_expr(io, mod, unit)
+end # function debug_short_circuiting_booleans unit
+
+function debug_short_circuiting_booleans(io::IO, mod::Module, expr::Expr)
+    circuit_expr = map_circuit_expr(mod, expr)
+    print_circuit_expr(io, mod, circuit_expr)
+end # function debug_short_circuiting_booleans expr
 
 """
     macro logic(n::Integer)
@@ -170,6 +222,16 @@ end # function debug_boolean
 macro logic(n::Integer)
     io = stdout
     debug_bitwise(io, __module__, Expr(:call, :identity, n))
+    n
+end
+
+"""
+    macro logic(bool::Bool)
+"""
+macro logic(bool::Bool)
+    io = stdout
+    debug_short_circuiting_booleans(io, __module__, CircuitUnit(bool, bool))
+    bool
 end
 
 """
@@ -180,7 +242,7 @@ macro logic(expr::Expr)
     if expr.head === :call
         debug_bitwise(io, __module__, expr)
     else
-        debug_boolean(io, __module__, expr)
+        debug_short_circuiting_booleans(io, __module__, expr)
     end
     esc(expr)
 end # macro logic

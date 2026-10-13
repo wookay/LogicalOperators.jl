@@ -2,7 +2,7 @@ baremodule LogicalOperators
 
 using Base: Base, @__MODULE__
 
-export @logic
+export @logic, debug_logic
 Base.include(@__MODULE__, "logic.jl")
 
 # AND, OR, XOR, NOT
