@@ -7,9 +7,10 @@ include("settings.jl")
 
 @test @logic(false) === false
 @test @logic(false && true) === false
-@test @logic( false &&  false  || true )
-@test @logic((false &&  false) || true )
-@test @logic( false && (false  || true)) === false ### wrong output
+@test @logic( false &&  false  || true          )
+@test @logic((false &&  false) || true          )
+@test @logic( false && (false  || true)         ) === false
+@test @logic( false && (false  || true || false)) === false
 @test @logic((1 > 2) && (3 > 4) || (6 > 5))
 
 x = 3

@@ -170,13 +170,10 @@ end # function print_circuit_output unit
 function print_circuit_output(io::IO, mod::Module, circuit_expr::CircuitExpr)
     if circuit_expr.head in (:&& , :||)
         for (idx, unit) in enumerate(circuit_expr.args)
-            # if unit isa CircuitExpr
-            #     print(io, "(")
-            # end
+            with_parenthesis = unit isa CircuitExpr && unit.head === :|| && circuit_expr.head === :&&
+            with_parenthesis && print(io, "(")
             print_circuit_output(io, mod, unit)
-            # if unit isa CircuitExpr
-            #     print(io, ")")
-            # end
+            with_parenthesis && print(io, ")")
             1 == idx && print(io, " ", circuit_expr.head, " ")
         end
     end
