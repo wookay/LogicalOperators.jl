@@ -48,6 +48,10 @@ function print_0b(io::IO)
     printstyled(io, "0b"; color = :light_black)
 end # function print_0b
 
+function println_if_is_not_interactive_and_is_a_tty(io::IO)
+    !Base.isinteractive() && isa(io, Base.TTY) && println(io)
+end # function println_if_is_not_interactive_and_is_a_tty
+
 function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
     Debug.verbose || return
     (op_pad, bin_pad, num_pad) = (0, 2, 0)
@@ -74,7 +78,7 @@ function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
         end
         println(io)
     end
-    !Base.isinteractive() && println(io)
+    println_if_is_not_interactive_and_is_a_tty(io)
 end # function print_bitwise_output
 
 function bitwise_expr(mod::Module, state::BitwiseState, op::Symbol, ex::Expr)
@@ -183,7 +187,7 @@ function print_circuit_expr(io::IO, mod::Module, expr::Union{CircuitExpr, Circui
     Debug.verbose || return
     print_circuit_output(io, mod, expr)
     println(io)
-    !Base.isinteractive() && println(io)
+    println_if_is_not_interactive_and_is_a_tty(io)
 end # function print_circuit_expr
 
 function map_circuit_expr(mod::Module, expr::Expr)::Union{CircuitExpr, CircuitUnit}
