@@ -4,7 +4,7 @@ using .Base: !, :, ∘, +, -,
              ndigits, min, max, iszero, enumerate,
              in, findfirst, first, length, bitstring, string, lpad,
              Bool, Vector, isempty, push!, pop!,
-             print, println, printstyled, stdout,
+             print, println, printstyled, IOContext, =>, stdout,
              VERSION, @v_str, >=
 
 mutable struct DebugSettings
@@ -34,6 +34,10 @@ struct BitwiseState
     stack::Vector{BitwiseOperand}
     BitwiseState() = new([], [])
 end
+
+function get_stdout()
+    IOContext(stdout, :color => true)
+end # function get_stdout
 
 function print_0b(io::IO)
     printstyled(io, "0b"; color = :light_black)
@@ -251,7 +255,7 @@ end # function debug_short_circuiting_booleans expr
     macro logic(n::Integer)
 """
 macro logic(n::Integer)
-    io = stdout
+    io = get_stdout()
     debug_bitwise(io, __module__, Expr(:call, :identity, n))
     n
 end
@@ -260,7 +264,7 @@ end
     macro logic(bool::Bool)
 """
 macro logic(bool::Bool)
-    io = stdout
+    io = get_stdout()
     debug_short_circuiting_booleans(io, __module__, CircuitUnit(bool, bool))
     bool
 end
@@ -269,7 +273,7 @@ end
     macro logic(expr::Expr)
 """
 macro logic(expr::Expr)
-    io = stdout
+    io = get_stdout()
     if expr.head === :call
         debug_bitwise(io, __module__, expr)
     else
