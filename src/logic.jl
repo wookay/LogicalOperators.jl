@@ -35,15 +35,6 @@ struct BitwiseState
     BitwiseState() = new([], [])
 end
 
-function get_bin_pad(x)
-    bitstr = bitstring(x)
-    first_one_idx = findfirst(==('1'), bitstr)
-    nbit = iszero(x) ? 2 : 8
-    bitsize = VERSION >= v"1.14-DEV" ? min(Core.bitsizeof(x), nbit) : nbit
-    bin_pad = first_one_idx === nothing ? bitsize : length(bitstr) - first_one_idx + 1
-    return bin_pad
-end # function get_bin_pad
-
 function print_0b(io::IO)
     printstyled(io, "0b"; color = :light_black)
 end # function print_0b
@@ -55,14 +46,49 @@ function println_if_not_isinteractive_or_isa_PipeEndpoint(io::IO)
     end
 end # function println_if_not_isinteractive_or_isa_PipeEndpoint
 
+function string_by_base(n::Unsigned; pad::Int)::String
+    string("0x", string(n; base=16, pad=pad))
+end # function string_by_base Unsigned
+
+function string_by_base(n::Signed; pad::Int)::String
+    string(n)
+end # function string_by_base Signed
+
+function ndigits_by_base(n::Unsigned)::Int
+    ndigits(n; base=16)
+end # function ndigits_by_base Unsigned
+
+function ndigits_by_base(n::Signed)::Int
+    ndigits(n)
+end # function ndigits_by_base Signed
+
+function get_num(mod::Module, x)
+    if x isa Symbol
+        Core.getglobal(mod, x)
+    elseif x isa Expr
+        Core.eval(mod, x)
+    else
+        x
+    end
+end # function get_num
+
+function get_bin_pad(x)
+    bitstr = bitstring(x)
+    first_one_idx = findfirst(==('1'), bitstr)
+    nbit = iszero(x) ? 2 : 8
+    bitsize = VERSION >= v"1.14-DEV" ? min(Core.bitsizeof(x), nbit) : nbit
+    bin_pad = first_one_idx === nothing ? bitsize : length(bitstr) - first_one_idx + 1
+    return bin_pad
+end # function get_bin_pad
+
 function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
     Debug.verbose || return
     (op_pad, bin_pad, num_pad) = (0, 2, 0)
     for unit in state.output
         op_pad  = max(op_pad,  unit.op === nothing ? 2 : length(String(unit.op)))
         bin_pad = max(bin_pad, get_bin_pad(unit.bin))
-        num = unit.num isa Symbol ? Core.getglobal(mod, unit.num) : unit.num
-        num_pad = max(num_pad, ndigits(num))
+        num = get_num(mod, unit.num)
+        num_pad = max(num_pad, ndigits_by_base(num))
     end
     for unit in state.output
         if unit.op === nothing
@@ -73,7 +99,8 @@ function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
         print(io, " ")
         print_0b(io)
         print(io, string(unit.bin, base=2, pad=bin_pad), " ")
-        str_num = lpad(string(unit.num), num_pad)
+        num = get_num(mod, unit.num)
+        str_num = lpad(string_by_base(num, pad=num_pad), num_pad + (num isa Signed ? 2 : 0))
         if unit.calculated
             printstyled(io, str_num; color = :green)
         else
@@ -114,11 +141,11 @@ end # function bitwise_calculated
 
 function bitwise_operation(mod::Module, state::BitwiseState, calc_already::Bool, calculated, op::Symbol, x, y)
     if !calc_already
-        nx = x isa Symbol ? Core.getglobal(mod, x) : x
+        nx = get_num(mod, x)
         push!(state.output, BitwiseUnit(nothing, nx, x, false))
     end
 
-    ny = y isa Symbol ? Core.getglobal(mod, y) : y
+    ny = get_num(mod, y)
     push!(state.output, BitwiseUnit(op, ny, y, false))
 
     bitwise_calculated(mod, state, calculated)
@@ -133,7 +160,7 @@ function debug_bitwise(io::IO, mod::Module, expr::Expr)
         bitwise_calculated(mod, state, calculated)
         print_bitwise_output(io, mod, state)
         return calculated
-    elseif op in (:(&), :(|), :(⊻), :(<<), :(>>), Symbol("<<<"), Symbol(">>>"))
+    elseif op in (:(*), :(+), :(-), :(&), :(|), :(⊻), :(<<), :(>>), Symbol("<<<"), Symbol(">>>"))
         state = BitwiseState()
         for x in expr.args[2:end]
             bitwise_expr(mod, state, op, x)
