@@ -1,6 +1,6 @@
 # baremodule LogicalOperators
 
-using .Base: !, :, ∘, +, -,
+using .Base: !, :, ∘, +, -, !==,
              ndigits, min, max, iszero, enumerate,
              in, findfirst, first, length, bitstring, string, lpad,
              Bool, Vector, isempty, push!, pop!,
@@ -87,12 +87,13 @@ end # function get_bin_pad
 
 function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
     Debug.verbose || return
-    (op_pad, bin_pad, num_pad) = (0, 2, 0)
+    (op_pad, bin_pad, num_pad, expr_pad) = (0, 2, 0, 0)
     for unit in state.output
         op_pad  = max(op_pad,  unit.op === nothing ? 2 : length(String(unit.op)))
         bin_pad = max(bin_pad, get_bin_pad(unit.bin))
         num = get_num(mod, unit.num)
         num_pad = max(num_pad, ndigits_by_base(num))
+        expr_pad = max(expr_pad, length(string(unit.num)))
     end
     for unit in state.output
         if unit.op === nothing
@@ -109,6 +110,9 @@ function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
             printstyled(io, str_num; color = :green)
         else
             print(io, str_num)
+        end
+        if unit.num !== num
+            print(io, " ", unit.num)
         end
         println(io)
     end
