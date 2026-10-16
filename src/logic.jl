@@ -66,6 +66,10 @@ function ndigits_by_base(n::Signed)::Int
     ndigits(n)
 end # function ndigits_by_base Signed
 
+function ndigits_by_base(n)::Int
+    ndigits(n; base=2)
+end # function ndigits_by_base n
+
 function get_num(mod::Module, x)
     if x isa Symbol
         Core.getglobal(mod, x)
@@ -87,13 +91,12 @@ end # function get_bin_pad
 
 function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
     Debug.verbose || return
-    (op_pad, bin_pad, num_pad, expr_pad) = (0, 2, 0, 0)
+    (op_pad, bin_pad, num_pad) = (0, 2, 0)
     for unit in state.output
         op_pad  = max(op_pad,  unit.op === nothing ? 2 : length(String(unit.op)))
         bin_pad = max(bin_pad, get_bin_pad(unit.bin))
         num = get_num(mod, unit.num)
         num_pad = max(num_pad, ndigits_by_base(num))
-        expr_pad = max(expr_pad, length(string(unit.num)))
     end
     for unit in state.output
         if unit.op === nothing
@@ -101,18 +104,29 @@ function print_bitwise_output(io::IO, mod::Module, state::BitwiseState)
         else
             printstyled(io, lpad(unit.op, op_pad); color = :cyan)
         end
-        print(io, " ")
-        print_0b(io)
-        print(io, string(unit.bin, base=2, pad=bin_pad), " ")
         num = get_num(mod, unit.num)
-        str_num = lpad(string_by_base(num, pad=num_pad), num_pad + (num isa Signed ? 2 : 0))
-        if unit.calculated
-            printstyled(io, str_num; color = :green)
+        print(io, " ")
+        if num isa Integer
+            print_0b(io)
+            print(io, string(unit.bin, base=2, pad=bin_pad), " ")
+            str_num = lpad(string_by_base(num, pad=num_pad), num_pad + (num isa Signed ? 2 : 0))
+            if unit.calculated
+                printstyled(io, str_num; color = :green)
+            else
+                print(io, str_num)
+            end
+            if unit.num !== num
+                print(io, " ", unit.num)
+            end
         else
-            print(io, str_num)
-        end
-        if unit.num !== num
-            print(io, " ", unit.num)
+            print_0b(io)
+            print(io, string(string(unit.bin, base=2, pad=bin_pad)))
+            print(io, " ")
+            if unit.calculated
+                printstyled(io, string(num); color = :green)
+            else
+                print(io, string(num))
+            end
         end
         println(io)
     end
