@@ -50,6 +50,10 @@ function println_if_not_isinteractive_or_isa_PipeEndpoint(io::IO)
     end
 end # function println_if_not_isinteractive_or_isa_PipeEndpoint
 
+function string_by_base(n::Bool; pad::Int)::String
+    string("  ", lpad(n, pad))
+end # function string_by_base Bool
+
 function string_by_base(n::Unsigned; pad::Int)::String
     string("0x", string(n; base=16, pad=pad))
 end # function string_by_base Unsigned
@@ -161,6 +165,16 @@ function bitwise_calculated(mod::Module, state::BitwiseState, calculated)
     return calculated
 end # function bitwise_calculated
 
+function bitwise_operation(mod::Module, state::BitwiseState, calc_already::Bool, calculated, op::Symbol, x::Expr)
+    if !calc_already
+        nx = get_num(mod, x)
+        push!(state.output, BitwiseUnit(nothing, nx, x, false))
+    end
+
+    bitwise_calculated(mod, state, calculated)
+    return calculated
+end
+
 function bitwise_operation(mod::Module, state::BitwiseState, calc_already::Bool, calculated, op::Symbol, x, y)
     if !calc_already
         nx = get_num(mod, x)
@@ -182,7 +196,7 @@ function debug_bitwise(io::IO, mod::Module, expr::Expr)
         bitwise_calculated(mod, state, calculated)
         print_bitwise_output(io, mod, state)
         return calculated
-    elseif op in (:(*), :(+), :(-), :(&), :(|), :(⊻), :(<<), :(>>), Symbol("<<<"), Symbol(">>>"))
+    elseif op in (:(*), :(+), :(-), :(~), :(&), :(|), :(⊻), :(<<), :(>>), Symbol("<<<"), Symbol(">>>"))
         state = BitwiseState()
         for x in expr.args[2:end]
             bitwise_expr(mod, state, op, x)
